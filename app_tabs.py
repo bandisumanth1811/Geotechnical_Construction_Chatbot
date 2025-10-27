@@ -156,6 +156,17 @@ def ensure_conversation():
     st.session_state["conversation"] = make_chain(vs, api_key)
     st.session_state["rag_status"] = "ready"
 
+def tidy_response(text: str) -> str:
+    """Cleans and formats model output for better Markdown readability."""
+    if not text:
+        return ""
+    text = text.strip()
+    # Ensure paragraphs have a blank line
+    text = text.replace("\n-", "\n\n-")
+    text = text.replace("** ", "**")
+    text = text.replace(" **", "**")
+    return text
+
 # ---------------- Session ----------------
 if "messages" not in st.session_state: st.session_state.messages = []
 if "conversation" not in st.session_state: st.session_state.conversation = None
@@ -293,145 +304,205 @@ with tab_chat:
     ensure_conversation()
     
     # Scrollable chat messages container
-    messages_html = ""
-    if not st.session_state.messages:
-        # Welcome message
-        messages_html = """
-            <div class="welcome-message">
-                <h3>👋 Welcome to AI Geotechnical Assistant</h3>
-                <p>Ask me anything about soil mechanics, foundations, construction methods, and more.</p>
-                <p style="font-size: 14px; margin-top: 12px;">💡 Try asking: "What are the types of shallow foundations?"</p>
-            </div>
-        """
-    else:
-        # Build message history HTML with inline styles
-        for msg in st.session_state.messages:
-            if msg["role"] == "user":
-                messages_html += f"""
-                    <div class="chat-message" style="font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
-                        <span style="font-weight: 700; color: #DC2626; margin-right: 6px;">You:</span>
-                        <span style="color: #000000;">{msg["content"]}</span>
-                    </div>
-                """
-            else:
-                messages_html += f"""
-                    <div class="chat-message" style="font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
-                        <span style="font-weight: 700; color: #2563EB; margin-right: 6px;">Assistant:</span>
-                        <span style="color: #000000;">{msg["content"]}</span>
-                    </div>
-                    <div style="height: 24px;"></div>
-                """
+    st.markdown('<div class="app-card" style="padding:20px;">', unsafe_allow_html=True)
     
-    # Display all messages in scrollable container using HTML component
-    chat_html = f"""
-    <style>
-    {open('').read() if False else '''
-    .chat-messages-container {{
-        height: 500px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding: 20px;
-        border: 2px solid #E5E7EB;
-        border-radius: 12px;
-        background: #FAFBFC;
-    }}
-    .chat-messages-container::-webkit-scrollbar {{
-        width: 8px;
-    }}
-    .chat-messages-container::-webkit-scrollbar-track {{
-        background: #f1f1f1;
-        border-radius: 4px;
-    }}
-    .chat-messages-container::-webkit-scrollbar-thumb {{
-        background: #888;
-        border-radius: 4px;
-    }}
-    .chat-messages-container::-webkit-scrollbar-thumb:hover {{
-        background: #555;
-    }}
-    .chat-message {{
-        margin-bottom: 8px;
-        line-height: 1.6;
-        font-size: 15px;
-    }}
-    .message-label {{
-        font-weight: 700;
-        margin-right: 6px;
-    }}
-    .user-label {{
-        color: #DC2626 !important;
-    }}
-    .assistant-label {{
-        color: #2563EB !important;
-    }}
-    .message-text {{
-        color: #000000 !important;
-    }}
-    .message-separator {{
-        height: 16px;
-    }}
-    .welcome-message {{
-        text-align: center;
-        padding: 60px 20px;
-        color: #6B7280;
-    }}
-    .welcome-message h3 {{
-        color: #0F4C81;
-        margin-bottom: 12px;
-        font-size: 24px;
-    }}
-    '''}
-    </style>
-    <div class="chat-messages-container" id="chatMessages">
-        {messages_html}
-    </div>
-    <script>
-    setTimeout(function() {{
-        var chatContainer = document.getElementById('chatMessages');
-        if (chatContainer) {{
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }}
-    }}, 100);
-    </script>
-    """
-    components.html(chat_html, height=550, scrolling=False)
+    if not st.session_state.messages:
+        with st.chat_message("assistant"):
+            st.markdown("👋 Hello! I can help answer questions about geotechnical construction. Ask me anything!")
+    else:
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
+
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    ## messages_html = ""
+    # if not st.session_state.messages:
+    #     # Welcome message
+    #     messages_html = """
+    #         <div class="welcome-message">
+    #             <h3>👋 Welcome to AI Geotechnical Assistant</h3>
+    #             <p>Ask me anything about soil mechanics, foundations, construction methods, and more.</p>
+    #             <p style="font-size: 14px; margin-top: 12px;">💡 Try asking: "What are the types of shallow foundations?"</p>
+    #         </div>
+    #     """
+    # else:
+    #     # Build message history HTML with inline styles
+    #     for msg in st.session_state.messages:
+    #         if msg["role"] == "user":
+    #             messages_html += f"""
+    #                 <div class="chat-message" style="font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
+    #                     <span style="font-weight: 700; color: #DC2626; margin-right: 6px;">You:</span>
+    #                     <span style="color: #000000;">{msg["content"]}</span>
+    #                 </div>
+    #             """
+    #         else:
+    #             messages_html += f"""
+    #                 <div class="chat-message" style="font-size: 16px; line-height: 1.6; margin-bottom: 8px;">
+    #                     <span style="font-weight: 700; color: #2563EB; margin-right: 6px;">Assistant:</span>
+    #                     <span style="color: #000000;">{msg["content"]}</span>
+    #                 </div>
+    #                 <div style="height: 24px;"></div>
+    #             """
+    
+    # # Display all messages in scrollable container using HTML component
+    # chat_html = f"""
+    # <style>
+    # {open('').read() if False else '''
+    # .chat-messages-container {{
+    #     height: 500px;
+    #     overflow-y: auto;
+    #     overflow-x: hidden;
+    #     padding: 20px;
+    #     border: 2px solid #E5E7EB;
+    #     border-radius: 12px;
+    #     background: #FAFBFC;
+    # }}
+    # .chat-messages-container::-webkit-scrollbar {{
+    #     width: 8px;
+    # }}
+    # .chat-messages-container::-webkit-scrollbar-track {{
+    #     background: #f1f1f1;
+    #     border-radius: 4px;
+    # }}
+    # .chat-messages-container::-webkit-scrollbar-thumb {{
+    #     background: #888;
+    #     border-radius: 4px;
+    # }}
+    # .chat-messages-container::-webkit-scrollbar-thumb:hover {{
+    #     background: #555;
+    # }}
+    # .chat-message {{
+    #     margin-bottom: 8px;
+    #     line-height: 1.6;
+    #     font-size: 15px;
+    # }}
+    # .message-label {{
+    #     font-weight: 700;
+    #     margin-right: 6px;
+    # }}
+    # .user-label {{
+    #     color: #DC2626 !important;
+    # }}
+    # .assistant-label {{
+    #     color: #2563EB !important;
+    # }}
+    # .message-text {{
+    #     color: #000000 !important;
+    # }}
+    # .message-separator {{
+    #     height: 16px;
+    # }}
+    # .welcome-message {{
+    #     text-align: center;
+    #     padding: 60px 20px;
+    #     color: #6B7280;
+    # }}
+    # .welcome-message h3 {{
+    #     color: #0F4C81;
+    #     margin-bottom: 12px;
+    #     font-size: 24px;
+    # }}
+    # '''}
+    # </style>
+    # <div class="chat-messages-container" id="chatMessages">
+    #     {messages_html}
+    # </div>
+    # <script>
+    # setTimeout(function() {{
+    #     var chatContainer = document.getElementById('chatMessages');
+    #     if (chatContainer) {{
+    #         chatContainer.scrollTop = chatContainer.scrollHeight;
+    #     }}
+    # }}, 100);
+    # </script>
+    # """
+    ## components.html(chat_html, height=550, scrolling=False)
     
     # Fixed input container at bottom
-    st.markdown('<div class="fixed-input-container">', unsafe_allow_html=True)
-    col_in, col_btn = st.columns([6, 1], gap="medium")
-    with col_in:
+st.markdown(
+    """
+    <style>
+      /* remove empty white space and box */
+      .fixed-input-container { margin-top: 0; background: transparent; border: none; padding: 0; }
+      .fixed-input-container .stForm { margin: 0; padding: 0; background: transparent; border: none; }
+    </style>
+    <div class="fixed-input-container"></div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Input + Submit form
+with st.form("chat_form", clear_on_submit=True):
+    c_in, c_btn = st.columns([6, 1], gap="medium")
+    with c_in:
         q = st.text_input(
-            "Type your message...", 
-            label_visibility="collapsed", 
-            key=f"question_box_{st.session_state.input_key}",
+            label="Type your message...",
+            label_visibility="collapsed",
+            key="question_box",
             placeholder="Ask about geotechnical construction..."
         )
-    with col_btn:
-        send = st.button("Send", use_container_width=True, key="send_btn", type="primary")
-    st.markdown('</div>', unsafe_allow_html=True)  # Close fixed-input-container
-    
-    # Handle message sending
-    if send and q.strip():
-        st.session_state.messages.append({"role": "user", "content": q})
-        convo = st.session_state.get("conversation")
-        status = st.session_state.get("rag_status")
-        if convo:
-            try:
-                with st.spinner("Thinking..."):
-                    result = convo({"question": q})
-                answer = result.get("answer", "(no answer returned)")
-            except Exception as e:
-                answer = f"(RAG error: {e})"
+    with c_btn:
+        submitted = st.form_submit_button("Send", use_container_width=True)
+
+# Handle message sending (ENTER or button)
+if submitted and q.strip():
+    st.session_state.messages.append({"role": "user", "content": q})
+    convo = st.session_state.get("conversation")
+    status = st.session_state.get("rag_status")
+    if convo:
+        try:
+            with st.spinner("Thinking..."):
+                result = convo({"question": q})
+            answer = result.get("answer", "(no answer returned)")
+        except Exception as e:
+            answer = f"(RAG error: {e})"
+    else:
+        if status == "missing_key":
+            answer = "⚠️ RAG unavailable: Please set your OPENAI_API_KEY in the Settings tab."
+        elif status == "no_pdfs":
+            answer = "⚠️ RAG unavailable: Please add PDFs in the Knowledge Base tab and rebuild the index."
         else:
-            if status == "missing_key":
-                answer = "⚠️ RAG unavailable: Please set your OPENAI_API_KEY in the Settings tab."
-            elif status == "no_pdfs":
-                answer = "⚠️ RAG unavailable: Please add PDFs in the Knowledge Base tab and rebuild the index."
-            else:
-                answer = "⚠️ RAG not ready. Please check Settings and Knowledge Base."
-        st.session_state.messages.append({"role": "assistant", "content": answer})
-        st.session_state.input_key += 1  # Increment key to reset input
-        st.rerun()
+            answer = "⚠️ RAG not ready. Please check Settings and Knowledge Base."
+    formatted = tidy_response(answer)
+    st.session_state.messages.append({"role": "assistant", "content": formatted})
+    st.rerun()
+    
+    ## st.markdown('<div class="fixed-input-container">', unsafe_allow_html=True)
+    # col_in, col_btn = st.columns([6, 1], gap="medium")
+    # with col_in:
+    #     q = st.text_input(
+    #         "Type your message...", 
+    #         label_visibility="collapsed", 
+    #         key=f"question_box_{st.session_state.input_key}",
+    #         placeholder="Ask about geotechnical construction..."
+    #     )
+    # with col_btn:
+    #     send = st.button("Send", use_container_width=True, key="send_btn", type="primary")
+    # st.markdown('</div>', unsafe_allow_html=True)  # Close fixed-input-container
+    
+    # # Handle message sending
+    # if send and q.strip():
+    #     st.session_state.messages.append({"role": "user", "content": q})
+    #     convo = st.session_state.get("conversation")
+    #     status = st.session_state.get("rag_status")
+    #     if convo:
+    #         try:
+    #             with st.spinner("Thinking..."):
+    #                 result = convo({"question": q})
+    #             answer = result.get("answer", "(no answer returned)")
+    #         except Exception as e:
+    #             answer = f"(RAG error: {e})"
+    #     else:
+    #         if status == "missing_key":
+    #             answer = "⚠️ RAG unavailable: Please set your OPENAI_API_KEY in the Settings tab."
+    #         elif status == "no_pdfs":
+    #             answer = "⚠️ RAG unavailable: Please add PDFs in the Knowledge Base tab and rebuild the index."
+    #         else:
+    #             answer = "⚠️ RAG not ready. Please check Settings and Knowledge Base."
+    #     st.session_state.messages.append({"role": "assistant", "content": answer})
+    #     st.session_state.input_key += 1  # Increment key to reset input
+    ##     st.rerun()
 
 # --- Photos Tab ---
 with tab_photos:
@@ -591,21 +662,21 @@ with tab_settings:
         key="OPENAI_API_KEY_OVERRIDE",
     )
 
-    colA, colB = st.columns(2)
-    with colA:
-        if st.button("Initialize / Refresh RAG", use_container_width=True):
-            st.session_state.conversation = None
-            ensure_conversation()
-            st.success(f"Status: {st.session_state.get('rag_status')}")
-    with colB:
-        if st.button("Delete Vectorstore", use_container_width=True):
-            if os.path.isdir(VECTORSTORE_DIR):
-                shutil.rmtree(VECTORSTORE_DIR, ignore_errors=True)
-                st.session_state.conversation = None
-                st.session_state.rag_status = "init"
-                st.success("Deleted. Rebuild from Knowledge Base tab.")
-            else:
-                st.info("No vectorstore found.")
+    # colA, colB = st.columns(2)
+    # with colA:
+    #     if st.button("Initialize / Refresh RAG", use_container_width=True):
+    #         st.session_state.conversation = None
+    #         ensure_conversation()
+    #         st.success(f"Status: {st.session_state.get('rag_status')}")
+    # with colB:
+    #     if st.button("Delete Vectorstore", use_container_width=True):
+    #         if os.path.isdir(VECTORSTORE_DIR):
+    #             shutil.rmtree(VECTORSTORE_DIR, ignore_errors=True)
+    #             st.session_state.conversation = None
+    #             st.session_state.rag_status = "init"
+    #             st.success("Deleted. Rebuild from Knowledge Base tab.")
+    #         else:
+    #             st.info("No vectorstore found.")
 
-    st.caption("Tip: Put your PDFs next to this app, then rebuild from the Knowledge Base tab.")
+    st.caption("⚠️ The administrative options are disabled in the public version.")
     st.markdown('</div>', unsafe_allow_html=True)
