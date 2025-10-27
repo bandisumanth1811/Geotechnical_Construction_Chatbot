@@ -654,13 +654,13 @@ with tab_settings:
     st.markdown('<div class="app-card" style="padding:20px;">', unsafe_allow_html=True)
     st.subheader("Settings")
 
-    st.text_input(
-        "OpenAI API Key",
-        value=st.session_state.get("OPENAI_API_KEY_OVERRIDE", ""),
-        type="password",
-        help="Optional override; if empty the app uses the OPENAI_API_KEY environment variable.",
-        key="OPENAI_API_KEY_OVERRIDE",
-    )
+    # st.text_input(
+    #     "OpenAI API Key",
+    #     value=st.session_state.get("OPENAI_API_KEY_OVERRIDE", ""),
+    #     type="password",
+    #     help="Optional override; if empty the app uses the OPENAI_API_KEY environment variable.",
+    #     key="OPENAI_API_KEY_OVERRIDE",
+    # )
 
     # colA, colB = st.columns(2)
     # with colA:
