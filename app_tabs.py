@@ -566,27 +566,27 @@ with tab_kb:
             size_kb = os.path.getsize(f) / 1024
             st.markdown(f"• **{f}** — {size_kb:,.1f} KB")
 
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("🔁 Rebuild Knowledge Base", use_container_width=True):
-            api_key = get_api_key()
-            if not api_key:
-                st.error("Set OPENAI_API_KEY in Settings first.")
-            else:
-                # clean old vs to force rebuild
-                if os.path.isdir(VECTORSTORE_DIR):
-                    shutil.rmtree(VECTORSTORE_DIR, ignore_errors=True)
-                vs = build_or_load_vectorstore(api_key)
-                if vs:
-                    st.session_state.conversation = make_chain(vs, api_key)
-                    st.session_state.rag_status = "ready"
-                    st.success("Knowledge base rebuilt.")
-                else:
-                    st.error("No PDFs found or failed to build vectorstore.")
-    with c2:
-        if st.button("🧹 Clear Chat History", use_container_width=True):
-            st.session_state.messages = []
-            st.success("Cleared.")
+    # c1, c2 = st.columns(2)
+    # with c1:
+    #     if st.button("🔁 Rebuild Knowledge Base", use_container_width=True):
+    #         api_key = get_api_key()
+    #         if not api_key:
+    #             st.error("Set OPENAI_API_KEY in Settings first.")
+    #         else:
+    #             # clean old vs to force rebuild
+    #             if os.path.isdir(VECTORSTORE_DIR):
+    #                 shutil.rmtree(VECTORSTORE_DIR, ignore_errors=True)
+    #             vs = build_or_load_vectorstore(api_key)
+    #             if vs:
+    #                 st.session_state.conversation = make_chain(vs, api_key)
+    #                 st.session_state.rag_status = "ready"
+    #                 st.success("Knowledge base rebuilt.")
+    #             else:
+    #                 st.error("No PDFs found or failed to build vectorstore.")
+    # with c2:
+    #     if st.button("🧹 Clear Chat History", use_container_width=True):
+    #         st.session_state.messages = []
+    #         st.success("Cleared.")
 
     # Vectorstore metadata
     if os.path.exists(METADATA_PATH):
