@@ -110,17 +110,20 @@ def merge_faiss_parts():
     """Merge split FAISS chunks back into a single index.faiss file (required for Streamlit Cloud)."""
     faiss_path = os.path.join(VECTORSTORE_DIR, "index.faiss")
     
-    # If the combined file already exists, nothing to do
-    if os.path.exists(faiss_path):
-        return
-        
     # Check if part 0 exists
     part_0 = os.path.join(VECTORSTORE_DIR, "index_part_0.faiss")
     if not os.path.exists(part_0):
-        # Neither combined nor parts exist
+        # Parts don't exist, assume index.faiss if present is already intact
         return
         
+    # If the combined file already exists, verify its size.
+    # If it's a tiny Git LFS pointer file (< 1MB), we must overwrite it with the real binary parts.
+    if os.path.exists(faiss_path):
+        if os.path.getsize(faiss_path) > 1024 * 1024:
+            return  # Already a real, full-sized index file
+            
     import glob
+    import shutil
     print(f"🔧 Rebuilding {faiss_path} from parts...")
     parts = sorted(glob.glob(os.path.join(VECTORSTORE_DIR, "index_part_*.faiss")))
     
