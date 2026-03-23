@@ -106,6 +106,32 @@ def split_docs(docs):
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     return splitter.split_documents(docs)
 
+def merge_faiss_parts():
+    """Merge split FAISS chunks back into a single index.faiss file (required for Streamlit Cloud)."""
+    faiss_path = os.path.join(VECTORSTORE_DIR, "index.faiss")
+    
+    # If the combined file already exists, nothing to do
+    if os.path.exists(faiss_path):
+        return
+        
+    # Check if part 0 exists
+    part_0 = os.path.join(VECTORSTORE_DIR, "index_part_0.faiss")
+    if not os.path.exists(part_0):
+        # Neither combined nor parts exist
+        return
+        
+    import glob
+    print(f"🔧 Rebuilding {faiss_path} from parts...")
+    parts = sorted(glob.glob(os.path.join(VECTORSTORE_DIR, "index_part_*.faiss")))
+    
+    with open(faiss_path, "wb") as output_file:
+        for part in parts:
+            print(f"   -> merging {os.path.basename(part)}...")
+            with open(part, "rb") as input_file:
+                shutil.copyfileobj(input_file, output_file)
+                
+    print("✅ Rebuild complete!")
+
 def build_or_load_vectorstore(api_key: str):
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=api_key)
 
@@ -175,6 +201,10 @@ def ensure_conversation():
     """Initialize RAG chain when possible."""
     if st.session_state.get("conversation"):
         return
+        
+    # Reassemble FAISS index parts if necessary (bypasses GitHub 100MB limit)
+    merge_faiss_parts()
+    
     api_key = get_api_key()
     if not api_key:
         st.session_state["rag_status"] = "missing_key"
